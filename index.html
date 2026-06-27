@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UK Mortgage Broker Lead Finder</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #f8f7f4; --surface: #ffffff; --surface2: #f1f0ec;
+    --border: rgba(0,0,0,0.1); --border-strong: rgba(0,0,0,0.18);
+    --text: #1a1a18; --text-muted: #6b6a65; --text-light: #9e9d98;
+    --accent: #185fa5; --accent-bg: #e6f1fb; --accent-text: #0c447c;
+    --success: #0f6e56; --success-bg: #e1f5ee;
+    --danger: #a32d2d; --danger-bg: #fcebeb;
+    --warning: #854f0b; --warning-bg: #faeeda;
+    --pro: #534ab7; --pro-bg: #eeedfe;
+    --radius: 8px;
+  }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; min-height: 100vh; }
+  .app { max-width: 1200px; margin: 0 auto; padding: 24px 20px; }
+  h1 { font-size: 22px; font-weight: 500; margin-bottom: 4px; }
+  .subtitle { color: var(--text-muted); font-size: 13px; margin-bottom: 24px; }
+  .card { background: var(--surface); border: 0.5px solid var(--border-strong); border-radius: 12px; padding: 20px 24px; margin-bottom: 16px; }
+  .card h2 { font-size: 15px; font-weight: 500; margin-bottom: 14px; }
+  .info-box { background: var(--accent-bg); border: 0.5px solid rgba(24,95,165,0.2); border-radius: var(--radius); padding: 12px 16px; margin-bottom: 14px; font-size: 12px; color: var(--accent-text); line-height: 1.7; }
+  .info-box strong { font-weight: 500; }
+  .info-box ol, .info-box ul { margin: 6px 0 0 16px; }
+  .warn-box { background: var(--warning-bg); border: 0.5px solid rgba(133,79,11,0.2); border-radius: var(--radius); padding: 12px 16px; margin-bottom: 14px; font-size: 12px; color: var(--warning); line-height: 1.7; }
+  .row { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
+  .field { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 160px; }
+  .field label { font-size: 12px; color: var(--text-muted); }
+  .field input, .field select, .field textarea { padding: 8px 12px; border: 0.5px solid var(--border-strong); border-radius: var(--radius); font-size: 13px; background: var(--surface); color: var(--text); outline: none; width: 100%; }
+  .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(24,95,165,0.1); }
+  .btn { padding: 9px 18px; border-radius: var(--radius); border: 0.5px solid var(--border-strong); background: transparent; color: var(--text); font-size: 13px; font-weight: 500; cursor: pointer; white-space: nowrap; transition: background 0.1s; }
+  .btn:hover { background: var(--surface2); }
+  .btn:active { transform: scale(0.98); }
+  .btn-primary { background: var(--text); color: white; border-color: var(--text); }
+  .btn-primary:hover { background: #333; }
+  .btn-success { background: var(--success); color: white; border-color: var(--success); }
+  .btn-success:hover { background: #0a5240; }
+  .btn-accent { background: var(--accent); color: white; border-color: var(--accent); }
+  .btn-accent:hover { background: #0f4a8a; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+  .progress-bar-bg { height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; margin-bottom: 8px; }
+  .progress-bar-fill { height: 100%; background: var(--accent); border-radius: 3px; transition: width 0.4s; width: 0%; }
+  .log-box { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 10px 14px; font-size: 12px; color: var(--text-muted); max-height: 120px; overflow-y: auto; font-family: monospace; line-height: 1.7; }
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 10px; margin-bottom: 16px; }
+  .stat-card { background: var(--surface); border-radius: var(--radius); padding: 12px 16px; border: 0.5px solid var(--border); }
+  .stat-label { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
+  .stat-value { font-size: 22px; font-weight: 500; }
+  .controls { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; align-items: center; }
+  .controls input, .controls select { padding: 7px 11px; border: 0.5px solid var(--border-strong); border-radius: var(--radius); font-size: 13px; background: var(--surface); color: var(--text); outline: none; }
+  .controls input { flex: 1; min-width: 180px; }
+  .table-wrap { background: var(--surface); border: 0.5px solid var(--border); border-radius: 12px; overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; min-width: 1000px; }
+  thead th { background: var(--surface2); padding: 9px 10px; text-align: left; font-size: 11px; font-weight: 500; color: var(--text-muted); border-bottom: 0.5px solid var(--border-strong); white-space: nowrap; }
+  tbody tr { border-bottom: 0.5px solid var(--border); }
+  tbody tr:hover { background: var(--surface2); }
+  td { padding: 8px 10px; vertical-align: middle; font-size: 12px; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 500; white-space: nowrap; }
+  .b-success { background: var(--success-bg); color: var(--success); }
+  .b-danger { background: var(--danger-bg); color: var(--danger); }
+  .b-accent { background: var(--accent-bg); color: var(--accent-text); }
+  .b-warning { background: var(--warning-bg); color: var(--warning); }
+  .b-pro { background: var(--pro-bg); color: var(--pro); }
+  .b-gray { background: var(--surface2); color: var(--text-muted); border: 0.5px solid var(--border); }
+  .score-wrap { display: flex; align-items: center; gap: 6px; }
+  .score-bg { flex: 1; height: 5px; background: var(--surface2); border-radius: 3px; overflow: hidden; min-width: 36px; }
+  .score-fill { height: 100%; border-radius: 3px; }
+  .score-num { font-size: 12px; font-weight: 500; min-width: 22px; text-align: right; }
+  .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+  .empty-state .icon { font-size: 36px; margin-bottom: 12px; }
+  .hidden { display: none !important; }
+  a { color: var(--accent-text); }
+  select.status-select { padding: 3px 6px; font-size: 11px; border-radius: var(--radius); border: 0.5px solid var(--border-strong); background: var(--surface); color: var(--text); cursor: pointer; }
+  .tab-bar { display: flex; gap: 2px; margin-bottom: 16px; background: var(--surface2); border-radius: var(--radius); padding: 3px; width: fit-content; }
+  .tab { padding: 7px 16px; border-radius: 6px; font-size: 13px; cursor: pointer; border: none; background: transparent; color: var(--text-muted); font-weight: 500; }
+  .tab.active { background: var(--surface); color: var(--text); }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>UK Mortgage Broker Lead Finder</h1>
+  <p class="subtitle">Finds leads, writes to a master Google Sheet automatically, deduplicates across every run, and tracks outreach status.</p>
+
+  <div class="tab-bar">
+    <button class="tab active" onclick="switchTab('search')">Lead search</button>
+    <button class="tab" onclick="switchTab('sheet')">Google Sheets setup</button>
+    <button class="tab" onclick="switchTab('script')">Email script</button>
+  </div>
+
+  <div id="tab-search" class="tab-content active">
+
+    <div class="card">
+      <h2>Search settings</h2>
+      <div class="info-box">
+        <strong>Two APIs needed in Google Cloud Console (both free):</strong>
+        <ol>
+          <li>Go to console.cloud.google.com → create a project</li>
+          <li>Enable Places API and Maps JavaScript API</li>
+          <li>Create an API key under Credentials and paste below</li>
+        </ol>
+      </div>
+      <div class="row" style="margin-bottom:12px">
+        <div class="field" style="flex:2">
+          <label>Google Places API key</label>
+          <input type="password" id="apiKey" placeholder="AIzaSy..." autocomplete="off">
+        </div>
+        <div class="field">
+          <label>Max reviews</label>
+          <input type="number" id="maxReviews" value="80" min="0" max="500">
+        </div>
+        <div class="field">
+          <label>City scope</label>
+          <select id="cityPreset">
+            <option value="top20">Top 20 UK cities</option>
+            <option value="top50" selected>Top 50 UK cities</option>
+            <option value="all">All 80+ UK cities</option>
+            <option value="custom">Custom list</option>
+          </select>
+        </div>
+      </div>
+      <div id="customCitiesWrap" class="hidden" style="margin-bottom:12px">
+        <div class="field">
+          <label>Custom cities (one per line)</label>
+          <textarea id="customCities" rows="4">London
+Manchester
+Birmingham</textarea>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:4px">
+        <button class="btn btn-primary" id="runBtn" onclick="startSearch()">Run search</button>
+        <button class="btn" id="stopBtn" onclick="stopSearch()" disabled>Stop</button>
+        <button class="btn btn-success" id="exportBtn" onclick="exportCSV()" disabled>Export CSV</button>
+        <button class="btn btn-accent" id="sheetBtn" onclick="syncToSheet()" disabled>Sync to Google Sheet</button>
+        <button class="btn" onclick="clearAll()">Clear</button>
+      </div>
+    </div>
+
+    <div id="progressCard" class="card hidden">
+      <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressBar"></div></div>
+      <div class="log-box" id="logBox"></div>
+    </div>
+
+    <div class="stats-grid hidden" id="statsGrid"></div>
+
+    <div class="controls hidden" id="controlsRow">
+      <input type="text" id="searchBox" placeholder="Search company, city, email…" oninput="renderTable()">
+      <select id="offerFilter" onchange="renderTable()">
+        <option value="">All offer types</option>
+        <option value="Website + Automation">Website + Automation</option>
+        <option value="Automation Only">Automation Only</option>
+      </select>
+      <select id="webFilter" onchange="renderTable()">
+        <option value="">All — website</option>
+        <option value="No">No website</option>
+        <option value="Yes">Has website</option>
+      </select>
+      <select id="emailFilter" onchange="renderTable()">
+        <option value="">All — email</option>
+        <option value="found">Email found</option>
+        <option value="guessed">Guessed only</option>
+        <option value="none">No email</option>
+      </select>
+      <select id="statusFilter" onchange="renderTable()">
+        <option value="">All statuses</option>
+        <option value="Not Contacted">Not Contacted</option>
+        <option value="Email Sent">Email Sent</option>
+        <option value="Replied">Replied</option>
+        <option value="Call Needed">Call Needed</option>
+        <option value="Won">Won</option>
+        <option value="Not Interested">Not Interested</option>
+      </select>
+      <select id="sortSelect" onchange="renderTable()">
+        <option value="score-desc">Score: high to low</option>
+        <option value="score-asc">Score: low to high</option>
+        <option value="reviews-asc">Reviews: low to high</option>
+        <option value="company-asc">Company A–Z</option>
+        <option value="city-asc">City A–Z</option>
+      </select>
+      <span id="resultCount" style="font-size:12px;color:var(--text-muted);white-space:nowrap"></span>
+    </div>
+
+    <div class="table-wrap" id="tableWrap">
+      <div class="empty-state">
+        <div class="icon">🔍</div>
+        <p>Enter your API key and click Run search to find leads</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab-sheet" class="tab-content">
+    <div class="card">
+      <h2>Google Sheets setup</h2>
+      <div class="info-box">
+        <strong>One-time setup — creates your master leads sheet:</strong>
+        <ol>
+          <li>Go to <strong>sheets.google.com</strong> and create a new blank spreadsheet</li>
+          <li>Name it "UK Mortgage Leads Master"</li>
+          <li>Copy the Sheet ID from the URL — it's the long string between /d/ and /edit</li>
+          <li>Paste it below, then click Save</li>
+          <li>Every time you run a search and click "Sync to Google Sheet", new leads are appended and duplicates are skipped automatically</li>
+        </ol>
+      </div>
+      <div class="warn-box">
+        To write to Google Sheets you also need to paste the Google Apps Script below into your sheet. Go to Extensions → Apps Script in your sheet, paste the script, and click Deploy.
+      </div>
+      <div class="row" style="margin-bottom:14px">
+        <div class="field">
+          <label>Google Sheet ID</label>
+          <input type="text" id="sheetId" placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms" oninput="saveSheetId()">
+        </div>
+        <div class="field">
+          <label>Web App URL (from Apps Script deploy)</label>
+          <input type="text" id="webAppUrl" placeholder="https://script.google.com/macros/s/..." oninput="saveWebAppUrl()">
+        </div>
+      </div>
+      <p style="font-size:12px;color:var(--text-muted);margin-bottom:14px">The Web App URL comes from deploying the Apps Script below. It's what allows this tool to write directly to your sheet.</p>
+    </div>
+
+    <div class="card">
+      <h2>Apps Script — paste this into your Google Sheet</h2>
+      <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Extensions → Apps Script → paste this → Save → Deploy → New deployment → Web app → Execute as Me → Anyone can access → Deploy → copy the URL above.</p>
+      <div style="background:var(--surface2);border-radius:var(--radius);padding:14px;font-family:monospace;font-size:11px;line-height:1.7;overflow-x:auto;white-space:pre;border:0.5px solid var(--border)" id="appsScriptCode"></div>
+      <button class="btn" style="margin-top:10px" onclick="copyScript()">Copy script</button>
+    </div>
+  </div>
+
+  <div id="tab-script" class="tab-content">
+    <div class="card">
+      <h2>Gmail email sender script</h2>
+      <div class="info-box">
+        <strong>How this works:</strong>
+        <ul>
+          <li>Paste this into a second Apps Script file in your Google Sheet</li>
+          <li>It reads every lead with status "Not Contacted" and an email address</li>
+          <li>Sends a personalised email using their company name, city and offer type</li>
+          <li>Updates the status to "Email Sent" and logs the date sent</li>
+          <li>Skips guessed emails by default (toggle below)</li>
+          <li>Sends max 50 per day automatically — spread across morning, midday and afternoon</li>
+          <li>Run it daily by setting a time-based trigger in Apps Script</li>
+        </ul>
+      </div>
+      <div class="warn-box">
+        Before sending: edit the YOUR_NAME, YOUR_WEBSITE and email templates in the script below to match your business.
+      </div>
+      <div style="margin-bottom:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <label style="font-size:12px;color:var(--text-muted);display:flex;align-items:center;gap:6px">
+          <input type="checkbox" id="includeGuessed"> Include guessed emails (info@ addresses)
+        </label>
+        <label style="font-size:12px;color:var(--text-muted);display:flex;align-items:center;gap:6px">
+          Daily limit: <input type="number" id="dailyLimit" value="50" min="10" max="100" style="width:60px;padding:4px 8px;border:0.5px solid var(--border-strong);border-radius:var(--radius);font-size:12px">
+        </label>
+        <button class="btn" onclick="generateEmailScript()">Generate script</button>
+      </div>
+      <div style="background:var(--surface2);border-radius:var(--radius);padding:14px;font-family:monospace;font-size:11px;line-height:1.7;overflow-x:auto;white-space:pre;border:0.5px solid var(--border);max-height:500px;overflow-y:auto" id="emailScriptCode"></div>
+      <button class="btn" style="margin-top:10px" onclick="copyEmailScript()">Copy email script</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const CITIES_TOP20 = ['London','Manchester','Birmingham','Leeds','Glasgow','Sheffield','Bradford','Edinburgh','Liverpool','Bristol','Cardiff','Coventry','Leicester','Nottingham','Newcastle upon Tyne','Sunderland','Brighton','Hull','Plymouth','Stoke-on-Trent'];
+const CITIES_TOP50 = [...CITIES_TOP20,'Wolverhampton','Southampton','Reading','Derby','Dudley','Northampton','Portsmouth','Luton','Aberdeen','Swansea','Milton Keynes','Peterborough','Swindon','Middlesbrough','Ipswich','Slough','Bolton','Wigan','Bournemouth','Crawley','Exeter','Oxford','Cambridge','Norwich','Gloucester','Bath','Cheltenham','Blackburn','Blackpool','York'];
+const CITIES_ALL  = [...CITIES_TOP50,'Chester','Warrington','Stockport','Salford','Oldham','Rochdale','Burnley','Preston','Lancaster','Carlisle','Gateshead','Durham','Harrogate','Wakefield','Huddersfield','Halifax','Rotherham','Doncaster','Barnsley','Chesterfield','Lincoln','Grimsby','Shrewsbury','Telford','Worcester','Hereford','Taunton','Yeovil','Torquay','Barnstaple','Truro','Inverness','Dundee','Perth','Stirling','Falkirk','Dumfries','Ayr','Kilmarnock','Paisley','Newport','Wrexham','Aberystwyth','Bangor Wales'];
+const SEARCH_TERMS = ['independent mortgage broker','mortgage adviser','mortgage broker'];
+const EMAIL_RE = /[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g;
+const EMAIL_IGNORE = ['sentry.io','wixpress.com','example.com','yourdomain','domain.com','wordpress.com','squarespace.com','wix.com','google.com','schema.org','w3.org','amazonaws.com','cloudflare.com'];
+const STATUSES = ['Not Contacted','Email Sent','Replied','Call Needed','Won','Not Interested'];
+
+let allLeads = [];
+let seenPlaceIds = new Set();
+let stopFlag = false;
+let placesService = null;
+
+// Load saved settings
+window.addEventListener('load', () => {
+  document.getElementById('sheetId').value = localStorage.getItem('sheetId') || '';
+  document.getElementById('webAppUrl').value = localStorage.getItem('webAppUrl') || '';
+  document.getElementById('cityPreset').addEventListener('change', function() {
+    document.getElementById('customCitiesWrap').classList.toggle('hidden', this.value !== 'custom');
+  });
+  // Load previously found leads from localStorage so they persist across page reloads
+  const saved = localStorage.getItem('allLeads');
+  if (saved) {
+    try {
+      allLeads = JSON.parse(saved);
+      allLeads.forEach(l => seenPlaceIds.add(l.id));
+      renderStats();
+      renderTable();
+      document.getElementById('exportBtn').disabled = false;
+      document.getElementById('sheetBtn').disabled = false;
+    } catch(e) {}
+  }
+  renderAppsScript();
+  generateEmailScript();
+});
+
+function saveSheetId() { localStorage.setItem('sheetId', document.getElementById('sheetId').value.trim()); }
+function saveWebAppUrl() { localStorage.setItem('webAppUrl', document.getElementById('webAppUrl').value.trim()); }
+
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  event.target.classList.add('active');
+}
+
+function log(msg) {
+  const el = document.getElementById('logBox');
+  el.innerHTML += msg + '\n';
+  el.scrollTop = el.scrollHeight;
+}
+
+function setProgress(pct) {
+  document.getElementById('progressBar').style.width = Math.min(pct, 100) + '%';
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function initPlacesService() {
+  const div = document.createElement('div');
+  document.body.appendChild(div);
+  const map = new google.maps.Map(div, { center: { lat: 52.5, lng: -1.9 }, zoom: 6 });
+  placesService = new google.maps.places.PlacesService(map);
+}
+
+function textSearch(query) {
+  return new Promise(resolve => {
+    placesService.textSearch({ query, type: 'finance' }, (results, status) => {
+      resolve(status === google.maps.places.PlacesServiceStatus.OK ? results : []);
+    });
+  });
+}
+
+function getDetails(placeId) {
+  return new Promise(resolve => {
+    placesService.getDetails(
+      { placeId, fields: ['name','formatted_phone_number','website','url','user_ratings_total','rating'] },
+      (result, status) => resolve(status === google.maps.places.PlacesServiceStatus.OK ? result : {})
+    );
+  });
+}
+
+async function fetchViaProxy(url) {
+  const tryProxy = async (proxyUrl, isJson) => {
+    try {
+      const r = await fetch(proxyUrl, { signal: AbortSignal.timeout(6000) });
+      if (!r.ok) return '';
+      const text = isJson ? (await r.json()).contents || '' : await r.text();
+      return text.length > 100 ? text : '';
+    } catch { return ''; }
+  };
+  const [a, b] = await Promise.all([
+    tryProxy(`https://corsproxy.io/?url=${encodeURIComponent(url)}`, false),
+    tryProxy(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`, true)
+  ]);
+  return a || b || '';
+}
+
+function extractEmailFromHtml(html) {
+  if (!html) return '';
+  const matches = html.match(EMAIL_RE) || [];
+  const valid = matches.filter(e => {
+    const l = e.toLowerCase();
+    return !EMAIL_IGNORE.some(ig => l.includes(ig)) && !l.startsWith('noreply') && !l.startsWith('no-reply') && l.length < 80;
+  });
+  const preferred = valid.find(e => /^(info|hello|contact|admin|enquiries|office|mail|team|support)@/i.test(e));
+  return preferred || valid[0] || '';
+}
+
+function guessEmail(websiteUrl) {
+  if (!websiteUrl) return '';
+  try {
+    const domain = new URL(websiteUrl.startsWith('http') ? websiteUrl : 'https://' + websiteUrl).hostname.replace(/^www\./, '');
+    return `info@${domain}`;
+  } catch { return ''; }
+}
+
+async function searchDirectory(companyName, city) {
+  try {
+    const q = encodeURIComponent(`"${companyName}" "${city}" email contact mortgage`);
+    const html = await fetchViaProxy(`https://www.google.com/search?q=${q}&num=5`);
+    return extractEmailFromHtml(html);
+  } catch { return ''; }
+}
+
+async function findEmail(websiteUrl, companyName, city) {
+  const [websiteEmail, dirEmail] = await Promise.all([
+    websiteUrl ? fetchViaProxy(websiteUrl).then(extractEmailFromHtml) : Promise.resolve(''),
+    searchDirectory(companyName, city)
+  ]);
+  if (websiteEmail) return { email: websiteEmail, source: 'scraped' };
+  if (dirEmail) return { email: dirEmail, source: 'directory' };
+  const guess = guessEmail(websiteUrl);
+  if (guess) return { email: guess, source: 'guessed' };
+  return { email: '', source: '' };
+}
+
+function scoreLeadData(lead) {
+  let s = 0;
+  if (lead.website === 'No') s += 35; else s += 15;
+  if (lead.reviews <= 10) s += 25;
+  else if (lead.reviews <= 30) s += 20;
+  else if (lead.reviews <= 60) s += 12;
+  else s += 5;
+  if (lead.size === 'Solo') s += 20;
+  s += 10;
+  if (lead.phone) s += 5;
+  return Math.min(s, 100);
+}
+
+function inferSize(name, phone) {
+  const isMobile = /^07|\+447/.test(phone || '');
+  if (isMobile) return 'Solo';
+  const n = (name || '').toLowerCase();
+  const teamSignals = ['group','bureau','centre','center','network','associates','solutions ltd','services ltd','& partners'];
+  return teamSignals.some(w => n.includes(w)) ? 'Small team' : 'Solo';
+}
+
+function today() { return new Date().toISOString().slice(0, 10); }
+
+async function startSearch() {
+  const apiKey = document.getElementById('apiKey').value.trim();
+  if (!apiKey) { alert('Please enter your Google Places API key.'); return; }
+
+  if (!window.google || !window.google.maps) {
+    log('Loading Google Maps SDK…');
+    try {
+      await new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
+        s.onload = resolve;
+        s.onerror = () => reject('Could not load Google Maps. Check your API key and make sure Maps JavaScript API + Places API are both enabled.');
+        document.head.appendChild(s);
+      });
+    } catch(err) { alert(err); return; }
+  }
+
+  initPlacesService();
+
+  const maxReviews = parseInt(document.getElementById('maxReviews').value) || 80;
+  const preset = document.getElementById('cityPreset').value;
+  let cities;
+  if (preset === 'top20') cities = CITIES_TOP20;
+  else if (preset === 'top50') cities = CITIES_TOP50;
+  else if (preset === 'all') cities = CITIES_ALL;
+  else cities = document.getElementById('customCities').value.split('\n').map(c => c.trim()).filter(Boolean);
+
+  stopFlag = false;
+  document.getElementById('runBtn').disabled = true;
+  document.getElementById('stopBtn').disabled = false;
+  document.getElementById('exportBtn').disabled = true;
+  document.getElementById('sheetBtn').disabled = true;
+  document.getElementById('progressCard').classList.remove('hidden');
+  document.getElementById('logBox').innerHTML = '';
+
+  const prevCount = allLeads.length;
+  log(prevCount > 0 ? `Resuming — ${prevCount} leads already in memory. New duplicates will be skipped.` : 'Starting fresh search…');
+
+  let cityDone = 0;
+
+  for (const city of cities) {
+    if (stopFlag) break;
+    for (const term of SEARCH_TERMS) {
+      if (stopFlag) break;
+      log(`Searching: ${term} — ${city}`);
+      const results = await textSearch(`${term} ${city} UK`);
+      const qualifying = results.filter(r => {
+        if (seenPlaceIds.has(r.place_id)) return false;
+        if ((r.user_ratings_total || 0) > maxReviews) return false;
+        seenPlaceIds.add(r.place_id);
+        return true;
+      });
+      const BATCH = 3;
+      for (let i = 0; i < qualifying.length; i += BATCH) {
+        if (stopFlag) break;
+        const batch = qualifying.slice(i, i + BATCH);
+        await Promise.all(batch.map(async r => {
+          await sleep(100);
+          const details = await getDetails(r.place_id);
+          const phone = details.formatted_phone_number || '';
+          const hasWebsite = !!details.website;
+          const name = r.name || '';
+          log(`  Finding email: ${name}`);
+          const { email, source } = await findEmail(details.website || '', name, city);
+          if (email) log(`  ${source === 'guessed' ? 'Guessed' : 'Found'}: ${email}`);
+          const lead = {
+            id: r.place_id,
+            company: name,
+            city,
+            address: r.formatted_address || '',
+            reviews: r.user_ratings_total || 0,
+            rating: r.rating || 0,
+            website: hasWebsite ? 'Yes' : 'No',
+            websiteUrl: details.website || '',
+            email,
+            emailSource: source,
+            phone,
+            googleUrl: details.url || `https://maps.google.com/?place_id=${r.place_id}`,
+            size: inferSize(name, phone),
+            offer: hasWebsite ? 'Automation Only' : 'Website + Automation',
+            status: 'Not Contacted',
+            dateFound: today(),
+            dateEmailed: '',
+            followUpDue: '',
+            notes: '',
+          };
+          lead.score = scoreLeadData(lead);
+          allLeads.push(lead);
+        }));
+        renderStats();
+        renderTable();
+        // Save to localStorage after every batch so data persists
+        localStorage.setItem('allLeads', JSON.stringify(allLeads));
+      }
+    }
+    cityDone++;
+    setProgress((cityDone / cities.length) * 100);
+    log(`✓ ${city} done — ${allLeads.length} total leads`);
+  }
+
+  stopFlag = false;
+  document.getElementById('runBtn').disabled = false;
+  document.getElementById('stopBtn').disabled = true;
+  document.getElementById('exportBtn').disabled = allLeads.length === 0;
+  document.getElementById('sheetBtn').disabled = allLeads.length === 0;
+  setProgress(100);
+  const newLeads = allLeads.length - prevCount;
+  log(`Done! ${newLeads} new leads found. ${allLeads.length} total in master list.`);
+  renderStats();
+  renderTable();
+}
+
+function stopSearch() {
+  stopFlag = true;
+  log('Stopping after current batch…');
+  document.getElementById('stopBtn').disabled = true;
+}
+
+function clearAll() {
+  if (!confirm('This will clear all leads from memory. Your Google Sheet will not be affected. Continue?')) return;
+  allLeads = [];
+  seenPlaceIds = new Set();
+  localStorage.removeItem('allLeads');
+  document.getElementById('progressCard').classList.add('hidden');
+  document.getElementById('statsGrid').classList.add('hidden');
+  document.getElementById('controlsRow').classList.add('hidden');
+  document.getElementById('exportBtn').disabled = true;
+  document.getElementById('sheetBtn').disabled = true;
+  document.getElementById('runBtn').disabled = false;
+  document.getElementById('tableWrap').innerHTML = '<div class="empty-state"><div class="icon">🔍</div><p>Enter your API key and click Run search to find leads</p></div>';
+}
+
+function jsonpRequest(url) {
+  return new Promise((resolve, reject) => {
+    const cbName = 'cb_' + Math.random().toString(36).slice(2);
+    window[cbName] = (data) => {
+      delete window[cbName];
+      document.getElementById(cbName) && document.getElementById(cbName).remove();
+      resolve(data);
+    };
+    const script = document.createElement('script');
+    script.id = cbName;
+    script.src = url + '&callback=' + cbName;
+    script.onerror = () => { delete window[cbName]; reject(new Error('JSONP failed')); };
+    document.head.appendChild(script);
+    setTimeout(() => { delete window[cbName]; reject(new Error('Timeout')); }, 15000);
+  });
+}
+
+async function syncToSheet() {
+  const webAppUrl = localStorage.getItem('webAppUrl');
+  if (!webAppUrl) { alert('Please add your Google Apps Script Web App URL in the Google Sheets Setup tab first.'); switchTab('sheet'); return; }
+  if (!allLeads.length) { alert('No leads to sync.'); return; }
+  document.getElementById('sheetBtn').disabled = true;
+  document.getElementById('sheetBtn').textContent = 'Syncing…';
+
+  const BATCH = 5;
+  let totalAdded = 0, totalSkipped = 0;
+  try {
+    for (let i = 0; i < allLeads.length; i += BATCH) {
+      const batch = allLeads.slice(i, i + BATCH);
+      const encoded = encodeURIComponent(JSON.stringify(batch));
+      const url = `${webAppUrl}?leads=${encoded}`;
+      const data = await jsonpRequest(url);
+      totalAdded += data.added || 0;
+      totalSkipped += data.skipped || 0;
+      document.getElementById('sheetBtn').textContent = `Syncing… ${Math.min(i + BATCH, allLeads.length)}/${allLeads.length}`;
+    }
+    alert(`Synced! ${totalAdded} new leads added to your Google Sheet. ${totalSkipped} duplicates skipped.`);
+  } catch(e) {
+    alert('Sync failed: ' + e.message + '. Make sure your Web App URL ends in /exec and is deployed with Anyone can access.');
+  }
+  document.getElementById('sheetBtn').disabled = false;
+  document.getElementById('sheetBtn').textContent = 'Sync to Google Sheet';
+}
+
+function updateStatus(id, newStatus) {
+  const lead = allLeads.find(l => l.id === id);
+  if (lead) {
+    lead.status = newStatus;
+    localStorage.setItem('allLeads', JSON.stringify(allLeads));
+    renderStats();
+  }
+}
+
+function renderStats() {
+  const total = allLeads.length;
+  if (!total) return;
+  const withEmail = allLeads.filter(l => l.email && l.emailSource !== 'guessed').length;
+  const hot = allLeads.filter(l => l.score >= 75).length;
+  const noWeb = allLeads.filter(l => l.website === 'No').length;
+  const notContacted = allLeads.filter(l => l.status === 'Not Contacted').length;
+  const sent = allLeads.filter(l => l.status === 'Email Sent').length;
+  const won = allLeads.filter(l => l.status === 'Won').length;
+  document.getElementById('statsGrid').classList.remove('hidden');
+  document.getElementById('statsGrid').innerHTML = `
+    <div class="stat-card"><div class="stat-label">Total leads</div><div class="stat-value">${total}</div></div>
+    <div class="stat-card"><div class="stat-label">Score 75+</div><div class="stat-value" style="color:var(--success)">${hot}</div></div>
+    <div class="stat-card"><div class="stat-label">Real emails</div><div class="stat-value" style="color:var(--accent)">${withEmail}</div></div>
+    <div class="stat-card"><div class="stat-label">Website + Auto</div><div class="stat-value" style="color:var(--pro)">${noWeb}</div></div>
+    <div class="stat-card"><div class="stat-label">Not contacted</div><div class="stat-value" style="color:var(--warning)">${notContacted}</div></div>
+    <div class="stat-card"><div class="stat-label">Emails sent</div><div class="stat-value">${sent}</div></div>
+    <div class="stat-card"><div class="stat-label">Won</div><div class="stat-value" style="color:var(--success)">${won}</div></div>
+  `;
+  document.getElementById('controlsRow').classList.remove('hidden');
+}
+
+function scoreColor(s) {
+  if (s >= 80) return 'var(--success)';
+  if (s >= 60) return 'var(--accent)';
+  if (s >= 40) return 'var(--warning)';
+  return 'var(--danger)';
+}
+
+function emailSourceBadge(source) {
+  if (source === 'scraped') return '<span class="badge b-success">Scraped</span>';
+  if (source === 'directory') return '<span class="badge b-accent">Directory</span>';
+  if (source === 'guessed') return '<span class="badge b-warning">Guessed</span>';
+  return '<span class="badge b-gray">None</span>';
+}
+
+function statusBadgeClass(s) {
+  if (s === 'Won') return 'b-success';
+  if (s === 'Replied') return 'b-accent';
+  if (s === 'Email Sent') return 'b-pro';
+  if (s === 'Call Needed') return 'b-warning';
+  if (s === 'Not Interested') return 'b-danger';
+  return 'b-gray';
+}
+
+function renderTable() {
+  const q = (document.getElementById('searchBox')?.value || '').toLowerCase();
+  const of = document.getElementById('offerFilter')?.value || '';
+  const wf = document.getElementById('webFilter')?.value || '';
+  const ef = document.getElementById('emailFilter')?.value || '';
+  const sf = document.getElementById('statusFilter')?.value || '';
+  const sort = document.getElementById('sortSelect')?.value || 'score-desc';
+
+  let filtered = allLeads.filter(l => {
+    const mq = !q || l.company.toLowerCase().includes(q) || l.city.toLowerCase().includes(q) || (l.email||'').toLowerCase().includes(q);
+    const mo = !of || l.offer === of;
+    const mw = !wf || l.website === wf;
+    const me = !ef || (ef === 'found' ? (!!l.email && l.emailSource !== 'guessed') : ef === 'guessed' ? l.emailSource === 'guessed' : !l.email);
+    const ms = !sf || l.status === sf;
+    return mq && mo && mw && me && ms;
+  });
+
+  filtered.sort((a, b) => {
+    if (sort === 'score-desc') return b.score - a.score;
+    if (sort === 'score-asc') return a.score - b.score;
+    if (sort === 'reviews-asc') return a.reviews - b.reviews;
+    if (sort === 'reviews-desc') return b.reviews - a.reviews;
+    if (sort === 'company-asc') return a.company.localeCompare(b.company);
+    if (sort === 'city-asc') return a.city.localeCompare(b.city);
+    return 0;
+  });
+
+  const el = document.getElementById('resultCount');
+  if (el) el.textContent = `Showing ${filtered.length} of ${allLeads.length}`;
+
+  if (!filtered.length) {
+    document.getElementById('tableWrap').innerHTML = '<div class="empty-state"><div class="icon">🔍</div><p>No leads match your filters.</p></div>';
+    return;
+  }
+
+  const statusOptions = STATUSES.map(s => `<option value="${s}">${s}</option>`).join('');
+
+  const rows = filtered.map((l, i) => {
+    const sc = scoreColor(l.score);
+    const emailDisplay = l.email ? `<a href="mailto:${l.email}" style="font-size:11px">${l.email}</a>` : '<span style="color:var(--text-light)">—</span>';
+    const webDisplay = l.websiteUrl ? `<a href="${l.websiteUrl}" target="_blank">Yes ↗</a>` : '<span style="color:var(--danger)">No</span>';
+    return `<tr>
+      <td style="color:var(--text-light);font-size:11px">${i + 1}</td>
+      <td><div style="font-weight:500;font-size:12px">${l.company}</div><div style="font-size:10px"><a href="${l.googleUrl}" target="_blank" style="color:var(--text-light)">Maps ↗</a></div></td>
+      <td style="font-size:11px;color:var(--text-muted)">${l.city}</td>
+      <td style="text-align:center"><span class="badge b-accent">${l.reviews}</span></td>
+      <td style="text-align:center">${webDisplay}</td>
+      <td>${emailDisplay}<div style="margin-top:3px">${emailSourceBadge(l.emailSource)}</div></td>
+      <td style="font-size:11px;color:var(--text-muted)">${l.phone || '—'}</td>
+      <td style="text-align:center"><span class="badge ${l.size === 'Solo' ? 'b-warning' : 'b-gray'}">${l.size}</span></td>
+      <td style="text-align:center"><span class="badge ${l.offer === 'Website + Automation' ? 'b-pro' : 'b-accent'}" style="font-size:10px">${l.offer}</span></td>
+      <td>
+        <select class="status-select" onchange="updateStatus('${l.id}', this.value)">
+          ${STATUSES.map(s => `<option value="${s}" ${l.status === s ? 'selected' : ''}>${s}</option>`).join('')}
+        </select>
+      </td>
+      <td style="font-size:11px;color:var(--text-muted)">${l.dateFound || '—'}</td>
+      <td>
+        <div class="score-wrap">
+          <div class="score-bg"><div class="score-fill" style="width:${l.score}%;background:${sc}"></div></div>
+          <span class="score-num" style="color:${sc}">${l.score}</span>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('tableWrap').innerHTML = `
+    <table>
+      <thead><tr>
+        <th style="width:28px">#</th>
+        <th style="width:18%">Company</th>
+        <th style="width:7%">City</th>
+        <th style="width:6%;text-align:center">Reviews</th>
+        <th style="width:6%;text-align:center">Website</th>
+        <th style="width:16%">Email</th>
+        <th style="width:10%">Phone</th>
+        <th style="width:6%;text-align:center">Size</th>
+        <th style="width:10%;text-align:center">Offer</th>
+        <th style="width:11%">Status</th>
+        <th style="width:7%">Found</th>
+        <th style="width:8%">Score</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+function exportCSV() {
+  if (!allLeads.length) return;
+  const headers = ['Rank','Company','City','Address','Reviews','Rating','Website','Website URL','Email','Email Source','Phone','Size','Offer Type','Status','Date Found','Date Emailed','Follow Up Due','Notes','Priority Score','Google Maps URL'];
+  const sorted = [...allLeads].sort((a, b) => b.score - a.score);
+  const rows = sorted.map((l, i) =>
+    [i+1, l.company, l.city, l.address, l.reviews, l.rating, l.website, l.websiteUrl, l.email, l.emailSource, l.phone, l.size, l.offer, l.status, l.dateFound, l.dateEmailed, l.followUpDue, l.notes, l.score, l.googleUrl]
+    .map(v => `"${String(v||'').replace(/"/g,'""')}"`).join(',')
+  );
+  const csv = [headers.join(','), ...rows].join('\n');
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `uk_mortgage_leads_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function renderAppsScript() {
+  const script = `// UK Mortgage Leads — Google Apps Script
+// Paste into Extensions > Apps Script in your Google Sheet
+// Deploy as Web App: Execute as Me, Anyone can access
+
+function doPost(e) {
+  try {
+    const data = JSON.parse(e.postData.contents);
+    const leads = data.leads || [];
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    let sheet = ss.getSheetByName('Leads');
+    if (!sheet) {
+      sheet = ss.insertSheet('Leads');
+      const headers = ['Rank','Company','City','Address','Reviews','Rating',
+        'Website','Website URL','Email','Email Source','Phone','Size',
+        'Offer Type','Status','Date Found','Date Emailed','Follow Up Due',
+        'Notes','Priority Score','Google Maps URL','Place ID'];
+      sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+      sheet.getRange(1, 1, 1, headers.length).setFontWeight('bold');
+      sheet.setFrozenRows(1);
+    }
+    // Build set of existing Place IDs to deduplicate
+    const lastRow = sheet.getLastRow();
+    const existingIds = new Set();
+    if (lastRow > 1) {
+      const idCol = sheet.getRange(2, 21, lastRow - 1, 1).getValues();
+      idCol.forEach(r => existingIds.add(r[0]));
+    }
+    let added = 0, skipped = 0;
+    const newRows = [];
+    leads.forEach((l, i) => {
+      if (existingIds.has(l.id)) { skipped++; return; }
+      newRows.push([
+        i + 1, l.company, l.city, l.address, l.reviews, l.rating,
+        l.website, l.websiteUrl, l.email, l.emailSource, l.phone, l.size,
+        l.offer, l.status || 'Not Contacted', l.dateFound, l.dateEmailed || '',
+        l.followUpDue || '', l.notes || '', l.score, l.googleUrl, l.id
+      ]);
+      added++;
+    });
+    if (newRows.length > 0) {
+      const startRow = Math.max(sheet.getLastRow() + 1, 2);
+      sheet.getRange(startRow, 1, newRows.length, newRows[0].length).setValues(newRows);
+    }
+    return ContentService.createTextOutput(
+      JSON.stringify({ success: true, added, skipped })
+    ).setMimeType(ContentService.MimeType.JSON);
+  } catch(err) {
+    return ContentService.createTextOutput(
+      JSON.stringify({ success: false, error: err.message })
+    ).setMimeType(ContentService.MimeType.JSON);
+  }
+}`;
+  document.getElementById('appsScriptCode').textContent = script;
+}
+
+function copyScript() {
+  navigator.clipboard.writeText(document.getElementById('appsScriptCode').textContent);
+  alert('Script copied to clipboard.');
+}
+
+function generateEmailScript() {
+  const includeGuessed = document.getElementById('includeGuessed').checked;
+  const dailyLimit = parseInt(document.getElementById('dailyLimit').value) || 50;
+  const script = `// UK Mortgage Leads — Gmail Email Sender
+// Paste into the SAME Apps Script project as the sync script (add a new file)
+// Set a daily time-based trigger on sendLeadEmails() to run once per day
+
+// ── EDIT THESE ────────────────────────────────────────────
+const YOUR_NAME = 'Your Name';
+const YOUR_BUSINESS = 'Your Business Name';
+const YOUR_WEBSITE = 'https://yourwebsite.co.uk';
+const DAILY_LIMIT = ${dailyLimit};
+const INCLUDE_GUESSED_EMAILS = ${includeGuessed};
+// ─────────────────────────────────────────────────────────
+
+function sendLeadEmails() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName('Leads');
+  if (!sheet) { Logger.log('No Leads sheet found.'); return; }
+
+  const data = sheet.getDataRange().getValues();
+  const headers = data[0];
+  const col = name => headers.indexOf(name);
+
+  let sent = 0;
+
+  for (let i = 1; i < data.length; i++) {
+    if (sent >= DAILY_LIMIT) break;
+
+    const row = data[i];
+    const status = row[col('Status')];
+    const email = row[col('Email')];
+    const emailSource = row[col('Email Source')];
+
+    if (status !== 'Not Contacted') continue;
+    if (!email) continue;
+    if (emailSource === 'guessed' && !INCLUDE_GUESSED_EMAILS) continue;
+
+    const company = row[col('Company')];
+    const city = row[col('City')];
+    const offer = row[col('Offer Type')];
+    const website = row[col('Website')];
+
+    const subject = buildSubject(company, offer);
+    const body = buildEmail(company, city, offer, website);
+
+    try {
+      GmailApp.sendEmail(email, subject, body);
+      sheet.getRange(i + 1, col('Status') + 1).setValue('Email Sent');
+      sheet.getRange(i + 1, col('Date Emailed') + 1).setValue(new Date().toISOString().slice(0, 10));
+      // Set follow-up due 3 days from now
+      const followUp = new Date();
+      followUp.setDate(followUp.getDate() + 3);
+      sheet.getRange(i + 1, col('Follow Up Due') + 1).setValue(followUp.toISOString().slice(0, 10));
+      sent++;
+      Utilities.sleep(3000); // 3 second gap between sends
+    } catch(err) {
+      Logger.log('Failed to send to ' + email + ': ' + err.message);
+    }
+  }
+  Logger.log('Sent ' + sent + ' emails today.');
+}
+
+function buildSubject(company, offer) {
+  if (offer === 'Website + Automation') {
+    return 'Quick question about ' + company + '\\'s online presence';
+  }
+  return 'A thought about ' + company + '\\'s lead process';
+}
+
+function buildEmail(company, city, offer, hasWebsite) {
+  if (offer === 'Website + Automation') {
+    return \`Hi,
+
+I came across \${company} while looking at mortgage brokers in \${city} and noticed you don\\'t currently have a website.
+
+I build websites specifically for independent mortgage brokers — designed to bring in new enquiries automatically, with a built-in lead qualification system so you know exactly what each person needs before you even pick up the phone.
+
+I\\'ve put together a quick demo that gives you an idea of what it would look like for a broker in \${city}. Happy to send it over if useful.
+
+No obligation — just thought it might be worth a look.
+
+Best,
+\${YOUR_NAME}
+\${YOUR_BUSINESS}
+\${YOUR_WEBSITE}\`;
+  }
+  return \`Hi,
+
+I noticed \${company} has a good presence on Google — \${city} is a competitive market for mortgage brokers so that\\'s no small thing.
+
+I work with independent brokers to add automated lead capture to their websites — so enquiries that come in outside of office hours get qualified automatically and you get an instant summary, rather than a voicemail you might miss.
+
+I\\'ve built a quick demo showing how it would work for a broker like you. Happy to share it if it sounds useful.
+
+Best,
+\${YOUR_NAME}
+\${YOUR_BUSINESS}
+\${YOUR_WEBSITE}\`;
+}`;
+  document.getElementById('emailScriptCode').textContent = script;
+}
+
+function copyEmailScript() {
+  navigator.clipboard.writeText(document.getElementById('emailScriptCode').textContent);
+  alert('Email script copied to clipboard.');
+}
+
+document.getElementById('includeGuessed')?.addEventListener('change', generateEmailScript);
+document.getElementById('dailyLimit')?.addEventListener('change', generateEmailScript);
+</script>
+</body>
+</html>
